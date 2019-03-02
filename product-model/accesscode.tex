@@ -21,12 +21,12 @@
     \item \textbf{动态信息}，价格、库存等。记为：$M_{partner}=M_{dynamic}+M_{static}$。\\
     将动态信息的高维数据打平，按最小粒度间夜拆分，$M_{dynamic}$可抽象为：
     \begin{center}
-    $M_{dynamic}=\left|\begin{array}{ccc}
-    A_0=(a_{0,0},a_{0,1},a_{0,2}, \dots, a_{0,k}) \\\
-    A_1=(a_{1,0},a_{1,1},a_{1,2}, \dots, a_{1,k}) \\\
-    \dots \\\
-    A_{\infty}=(a_{\infty,0},a_{\infty,1},a_{\infty,2},\dots,a_{\infty,k}) 
-    \end{array} \right|，（A_i表示间夜粒度产品信息）$
+        $M_{dynamic}=\left|\begin{array}{ccc}
+            A_0=(a_{0,0},a_{0,1},a_{0,2}, \dots, a_{0,k}) \\\
+            A_1=(a_{1,0},a_{1,1},a_{1,2}, \dots, a_{1,k}) \\\
+            \dots \\\
+            A_{\infty}=(a_{\infty,0},a_{\infty,1},a_{\infty,2},\dots,a_{\infty,k}) 
+        \end{array} \right|$，$A_i$表示间夜粒度产品信息
     \end{center}
     \item 由于数据持续更新，所以\textbf{$M_{dynamic}$本质上是一个Stream}。
     \item 记$A_i$类型为$DailyData$，$M_{static}$类型为$StaticData$，Code的类型为$Code$。$A$表示$A_i$组成的集合。
@@ -44,13 +44,14 @@
 
 \section{供给存储模型（统一Cache模型，180天）}
 \begin{center}
-$M_{cache} = \left|\begin{array}{ccc}
-Cell_{0,code_0},Cell_{0,code_1},Cell_{0,code_2},...,Cell_{0,code_j} \\\
-Cell_{1,code_0},Cell_{1,code_1},Cell_{1,code_2},...,Cell_{1,code_J} \\\
-\dots \\\
-Cell_{179,code_0},Cell_{179,code_1},Cell_{179,code_2},...,Cell_{179,code_j}
-\end{array} \right|
-= Date \times Code$
+    $M_{cache} = 
+    \left|\begin{array}{ccc}
+        Cell_{0,code_0},Cell_{0,code_1},Cell_{0,code_2},...,Cell_{0,code_j} \\\
+        Cell_{1,code_0},Cell_{1,code_1},Cell_{1,code_2},...,Cell_{1,code_J} \\\
+        \dots \\\
+        Cell_{179,code_0},Cell_{179,code_1},Cell_{179,code_2},...,Cell_{179,code_j}
+    \end{array} \right|
+    = Date \times Code$
 \end{center}
 
 \begin{itemize}
