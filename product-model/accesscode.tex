@@ -26,7 +26,7 @@
             A_1=(a_{1,0},a_{1,1},a_{1,2}, \dots, a_{1,k}) \\\
             \dots \\\
             A_{\infty}=(a_{\infty,0},a_{\infty,1},a_{\infty,2},\dots,a_{\infty,k}) 
-        \end{array} \right|$，$A_i$表示间夜粒度产品信息
+        \end{array} \right|，A_{i}$表示间夜粒度产品信息
     \end{center}
     \item 由于数据持续更新，所以\textbf{$M_{dynamic}$本质上是一个Stream}。
     \item 记$A_i$类型为$DailyData$，$M_{static}$类型为$StaticData$，Code的类型为$Code$。$A$表示$A_i$组成的集合。
@@ -95,27 +95,27 @@
 \subsection{ 流程 }
 \begin{enumerate}
 \item $M_{partner}$可以通过函数$F$（间夜粒度数据映射成Code）和$modelTrans$映射成$M_{cache}$：
-\begin{center}
-    $M_{partner}\stackrel{(F,modelTrans)}{\longrightarrow} M_{cache}$
-\end{center}
+    \begin{center}
+        $M_{partner}\stackrel{(F,modelTrans)}{\longrightarrow} M_{cache}$
+    \end{center}
 \item Code的维度集合$Dim_C$可以通过函数$T$映射成C端售卖维度集合$Dim_S$：
-\begin{itemize}
-\item $Dim_C  \stackrel{T}{\longrightarrow} Dim_S$
-\item $Dim_C $与Code对应, $Dim_S$与GoodsIs对应
-\item $Code  \stackrel{T_{code}}{\longrightarrow} GoodsId$，$T_{code}$表示Code到GoodsId的映射方法
-\end{itemize}
+    \begin{itemize}
+        \item $Dim_C  \stackrel{T}{\longrightarrow} Dim_S$
+        \item $Dim_C $与Code对应, $Dim_S$与GoodsIs对应
+        \item $Code  \stackrel{T_{code}}{\longrightarrow} GoodsId$，$T_{code}$表示Code到GoodsId的映射方法
+    \end{itemize}
 \item 接入工作，需根据实际情况：
-\begin{itemize}
-\item 确定$Dim_C$，即Code所对应的维度
-\item 定义$dimExtract, code, modelTrans, T_{code}, T_{code}^{-1}$这几个方法
-\item $Dim_S$目前就是产品中心模型
-\end{itemize}
+    \begin{itemize}
+        \item 确定$Dim_C$，即Code所对应的维度
+        \item 定义$dimExtract, code, modelTrans, T_{code}, T_{code}^{-1}$这几个方法
+        \item $Dim_S$目前就是产品中心模型
+    \end{itemize}
 \item 查询时流程是反向的，将GoodsId映射成Code，然后从$M_{cache}$中拿数据：
-\begin{itemize}
-\item $GoodsId  \stackrel{T_{code}^{-1}}{\longrightarrow} Code$
-\item $M_{cache}[Code][DateRange] = 目标Data$
-\item 返回给产品中心前，需将$Data$转成接口定义的Model
-\end{itemize}
+    \begin{itemize}
+        \item $GoodsId  \stackrel{T_{code}^{-1}}{\longrightarrow} Code$
+        \item $M_{cache}[Code][DateRange] = 目标Data$
+        \item 返回给产品中心前，需将$Data$转成接口定义的Model
+    \end{itemize}
 \end{enumerate}
 
 \end{document}
