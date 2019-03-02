@@ -1,0 +1,121 @@
+\documentclass[a4paper]{article}
+\usepackage{xeCJK}
+
+\usepackage[a4paper,top=2cm,bottom=2cm,left=2cm,right=2cm,marginparwidth=1.75cm]{geometry}
+
+\begin{document}
+
+
+\section{前提}
+
+\begin{itemize}
+
+\item AccessCode（简称Code）用于标识供应商最小售卖单元，用$Code$表示所有可能Code的集合。
+
+\item 调用供应商预定接口时，需要传递Code对应的信息和附加属性。
+
+\item 最小售卖单元由供应商的一组数据模型维度描述，记这组维度为$Dim=(d_0,d_1,d_2,\dots,d_n)$
+
+\item 设由${d_i}$表示维度的值域为$D_i$，则$Dim$所表示的维度组合的值域为$V = \{( v_0,v_1,v_2,\dots,v_n) \mid v_i \in D_i, i = 0..n\}$。
+
+\item $V_c = \{ \overline v \mid code(\overline v) = c, c \in Code, \overline v \in V\}$，这里函数$code$用于生成Code，根据定义可知$V_c \subseteq V$，即供应商有可能不允许维度的任意组合。
+\end{itemize}
+
+\section{ 供应商原始模型（各有不同）}
+\paragraph{供应商数据由两部分组成：}
+\begin{itemize}
+\item \textbf{静态信息}，如酒店信息、房型信息、预定义的RatePlan等。
+\item \textbf{动态信息}，价格、库存等。记为：$M_{partner}=M_{dynamic}+M_{static}$。
+
+将动态信息的高维数据打平，按最小粒度间夜拆分，$M_{dynamic}$可抽象为：
+\begin{center}
+$M_{dynamic}=\left|\begin{array}{ccc}
+A_0=(a_{0,0},a_{0,1},a_{0,2}, \dots, a_{0,k}) \\\
+A_1=(a_{1,0},a_{1,1},a_{1,2}, \dots, a_{1,k}) \\\
+\dots \\\
+A_{\infty}=(a_{\infty,0},a_{\infty,1},a_{\infty,2},\dots,a_{\infty,k}) 
+\end{array} \right|，（A_i表示间夜粒度产品信息）$
+\end{center}
+\item 由于数据持续更新，所以\textbf{$M_{dynamic}$本质上是一个Stream}。
+\item 记$A_i$类型为$DailyData$，$M_{static}$类型为$StaticData$，Code的类型为$Code$。$A$表示$A_i$组成的集合。
+\item 由\textbf{间夜粒度动态信息}$a\in \{A_0,A_1,...\}$和$M_{static}$，可以得到唯一的Code，形式化可以记为$\exists F,  \forall a \in A, F(a,M_{static}) = c ,  c\in Code$，即针对每个接入方都可以定出一个函数$F::(DailyData, StaticData) \to Code$，根据间夜数据和静态信息找到对应的Code。
+\item 更进一步：$F$并不是必须的，因为\textbf{$F$和前提中函数$code$功能重复}，可以增加一个辅助函数$dimExtract$用于从$(a, M_{static})$中抽取Code相关维度数据$\overline v，\overline v \in V_c$。形式化表达为：
+\begin{center}
+    $\exists dimExtract,  \forall a \in A, code(dimExtract(a,M_{static})) = c ,  c\in Code$。
+\end{center}
+\item 该供应商数据对应的Code集合为：
+\begin{center}
+    $\{ c | c = F(a, M_{static}), a \in M_{dynamic}\}$。
+\end{center}
+注：$M_{dynamic}$无限大，但是Code集合是有限大小。
+\end{itemize}
+
+\section{供给存储模型（统一Cache模型，180天）}
+\begin{center}
+$M_{cache} = \left|\begin{array}{ccc}
+Cell_{0,code_0},Cell_{0,code_1},Cell_{0,code_2},...,Cell_{0,code_j} \\\
+Cell_{1,code_0},Cell_{1,code_1},Cell_{1,code_2},...,Cell_{1,code_J} \\\
+\dots \\\
+Cell_{179,code_0},Cell_{179,code_1},Cell_{179,code_2},...,Cell_{179,code_j}
+\end{array} \right|
+= Date \times Code$
+\end{center}
+
+\begin{itemize}
+    \item $Cell_{date,code}$存储$(Date，Code)$粒度各种属性
+    \item $M_{dynamic}$到$M_{cache}$的变换可由如下映射表示：
+    \begin{center}
+        $Cell_{date, F(A_{date},M_{static})} = modelTrans(A_{date},M_{static})$
+    \end{center}
+\end{itemize}
+
+\section{解释一下}
+\begin{enumerate}
+\item 函数$modelTrans$用于将原始数据转换成Cell的数据结构，即Cell存储的数据为$modelTrans(A_{date},M_{static})$
+\item 函数类型：$modelTrans::(DailyData_{date}, StaticData) \to Cell_{(date,code)}$
+\item Code生成：$code=F(A_{date},M_{static})$
+\item 放一起有：$Cell_{date,code} = modelTrans(A_{date},M_{static})$
+\end{enumerate}
+\subsection{ 供给模型到售卖模型映射（Code=>GoodsId）}
+
+\begin{itemize}
+\item 供给模型的数据维度：
+$Dim_C=\{d_0,d_1,d_2,...,d_n\}$
+\item 售卖模型的数据维度：
+$Dim_S=\{s_0,s_1,s_2,...,s_m\}$
+自销的话售卖模型就是**产品中心**的模型
+
+\item 新供应商可以支持的条件为：
+$\exists T, Dim_C  \stackrel{T}{\longrightarrow} Dim_S$，即可以找到映射函数T，将供给维度映射成售卖维度
+
+\item 通常供给方维度仅是售卖单元维度的扩充，这时：
+$Dim_C=\{d_0,d_1,d_2,...,d_n\}$，$Dim_S=\{s_0,s_1,s_2,...,s_m\}$，其中$n \ge m，Dim_S  \subseteq Dim_C$，映射函数$T$的功能就是按维度聚合
+\end{itemize}
+
+\subsection{ 流程 }
+\begin{enumerate}
+\item $M_{partner}$可以通过函数$F$（间夜粒度数据映射成Code）和$modelTrans$映射成$M_{cache}$：
+\begin{center}
+    $M_{partner}\stackrel{(F,modelTrans)}{\longrightarrow} M_{cache}$
+\end{center}
+\item Code的维度集合$Dim_C$可以通过函数$T$映射成C端售卖维度集合$Dim_S$：
+\begin{itemize}
+\item $Dim_C  \stackrel{T}{\longrightarrow} Dim_S$
+\item $Dim_C $与Code对应, $Dim_S$与GoodsIs对应
+\item $Code  \stackrel{T_{code}}{\longrightarrow} GoodsId$，$T_{code}$表示Code到GoodsId的映射方法
+\end{itemize}
+\item 接入工作，需根据实际情况：
+\begin{itemize}
+\item 确定$Dim_C$，即Code所对应的维度
+\item 定义$dimExtract, code, modelTrans, T_{code}, T_{code}^{-1}$这几个方法
+\item $Dim_S$目前就是产品中心模型
+\end{itemize}
+\item 查询时流程是反向的，将GoodsId映射成Code，然后从$M_{cache}$中拿数据：
+\begin{itemize}
+\item $GoodsId  \stackrel{T_{code}^{-1}}{\longrightarrow} Code$
+\item $M_{cache}[Code][DateRange] = 目标Data$
+\item 返回给产品中心前，需将$Data$转成接口定义的Model
+\end{itemize}
+\end{enumerate}
+
+\end{document}
