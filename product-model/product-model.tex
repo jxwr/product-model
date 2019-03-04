@@ -1,0 +1,169 @@
+\documentclass[a4paper]{article}
+\usepackage{xeCJK}
+\usepackage[a4paper,top=2cm,bottom=2cm,left=1.5cm,right=1.5cm,marginparwidth=1.75cm]{geometry}
+
+\title{商品模型形式化定义}
+\author{jiaoxiang@meituan.com}
+\date{\today}
+ 
+\begin{document}
+ 
+\maketitle
+
+\section{定价维度}
+上单和下单是由一组维度$D=\{d_0, d_1, d_2,\ldots, d_n\}$决定的\textbf{最小定价单元}的逆过程。
+\begin{itemize} 
+    \item 供应链根据$D$定义价格。
+    \item 交易根据$D$定位价格。
+\end{itemize}
+可以认为，订单项一定直接或间接包含了$D$的全维度数据及对应的价格。
+
+\subsection{维度的两部分}
+$D$可以分为两部分，一部分定义了产品，剩余部分定义产品的价格，这里将
+\begin{itemize}
+    \item 定义产品的维度记为$D_{product} \subset D$，其值域为$V_{product}$
+    \begin{itemize}
+        \item $V_{product} = \{(v_0, v_1, v_2, \ldots, v_n) \mid v_i \in Z_i\}$，这里$Z_i$为$d_i \in D_{product}$的值域
+    \end{itemize}
+    \item 定义产品价格的维度记为$D_{pricing} = D - D_{product}$，其值域为$V_{pricing}$
+\end{itemize}
+\begin{equation}
+    \{\underbrace{%
+        \overbrace{\mathstrut d_0,\ldots,d_k}^{D_{product}},
+        \overbrace{\mathstrut d_{k+1},\ldots,d_n}^{D_{pricing}}}
+    _{D} \}
+\end{equation}
+实现时，通常会为$v \in V_{product}$创建一个$id_{product}$，该$id$在进入产品详情页时已经确定。$D_{pricing}$的数据在详情页及填单页由用户选择或填写决定，最终记录在订单项上。
+
+\section{商品结构}
+为产品生成一个$id_{product}$比较容易理解，对于$D_{pricing}$要复杂一些。
+
+\subsection{传统零售电商}
+实物零售电商定价比较直接，会为每个$v \in V_{pricing}$创建一个$id_{pricing}$
+\begin{itemize}
+    \item 业界把由$v$确定的实体叫做\textbf{SKU}，此时$id_{pricing}=id_{sku}$
+    \item $(id_{product}, id_{sku})$确定一个订单项，记为$(id_{product}, id_{sku}) \longrightarrow orderline$
+\end{itemize}
+\begin{equation}
+    \{\underbrace{%
+        \overbrace{\mathstrut d_0,\ldots,d_k}^{D_{product}},
+        \overbrace{\mathstrut d_{k+1},\ldots,d_n}^{D_{sku}}}
+    _{D} \}
+\end{equation}
+        
+\subsection{服务类电商}
+对于服务类电商，有两类情况导致不适合为每个$D_{pricing}$创建一个$id$
+\begin{enumerate}
+    \item 一些维度d的基数较大，为$D_{pricing}$创建$id$会导致$id$爆炸
+    \item 价格是由维度根据计算公式动态确定，无法枚举
+\end{enumerate}
+这种情况，我们可将$D_{pricing}$拆分成部分：$D_{pricingBase}$和$D_{pricingParams}$：
+\begin{itemize}
+    \item 实现时会为$D_{pricingBase}$生成$id_{pricingBase}$和数据库记录
+    \item $D_{pricingParams}$作为该记录内部的价格因素
+    \item $id_{pricingBase}$与用户参数$\overline{params}$共同定位价格
+\end{itemize}
+\begin{equation}
+    \{\underbrace{%
+        \overbrace{\mathstrut d_0,\ldots,d_k}^{D_{product}},
+        \overbrace{\mathstrut d_{k+1},\ldots,d_l}^{D_{pricingBase}},
+        \overbrace{\mathstrut d_{l+1},\ldots,d_n}^{D_{pricingParams}}
+    }
+    _{D} \}
+\end{equation}
+
+\subsection{到店业务分析}
+\begin{itemize}
+    \item \textbf{美团酒店}
+        \begin{itemize}
+            \item 酒店$goods$没有区分$D_{product}$和$D_{pricing}$
+            \item 而是把一部分$D_{pricing}$中的维度放到了$D_{product}$里，其余作为参数（日期，成人儿童数等）
+            \item $D$被划分为$D_{goods}$和$D_{params}$两部分，CRS为每个$v \in V_{goods}$创建一个$id_{goods}$
+            \item $id_{goods}$和下单参数$\overline{params}$确定一个订单项，记为$(id_{goods}, \overline{params}) \longrightarrow orderline$
+        \end{itemize}
+        \begin{equation}
+            \{\underbrace{%
+                \overbrace{\mathstrut d_0,\ldots,d_k}^{D_{goods}},
+                \overbrace{\mathstrut d_{k+1},\ldots,d_n}^{D_{params}}
+            }
+            _{D} \}
+        \end{equation}
+    \item \textbf{到餐团购}
+        \begin{itemize}
+            \item 团购$deal$更简单一些，可认为没有用户参数
+            \item 团购没有区分$D_{product}$和$D_{pricing}$，$v \in V$对应一个$id_{deal}$
+            \item 用$id_{deal}$就可以确定订单项，$id_{deal} \longrightarrow orderline$
+        \end{itemize}
+        \begin{equation}
+            \{\underbrace{%
+                \overbrace{\mathstrut d_0,\ldots,d_n}^{D_{deal}}
+            }
+            _{D} \}
+        \end{equation}        
+    \item \textbf{度假}
+        \begin{itemize}
+            \item 度假有两个层级的产品结构：$product+sku$和$product+package+sku$
+            \item $product+sku$与传统零售电商类似，只是把日期从$D_{pricing}$中剥离出来
+            \begin{enumerate}
+                \item 订单项：$(id_{product}, id_{sku}, param_{date}) \longrightarrow orderline$
+                \begin{equation}
+                    \{\underbrace{%
+                        \overbrace{\mathstrut d_0,\ldots,d_k}^{D_{product}},
+                        \overbrace{\mathstrut d_{k+1},\ldots,d_{n-2}}^{D_{sku}},
+                        \overbrace{\mathstrut d_{n-1},\ldots,d_n}^{D_{date}}
+                    }
+                    _{D} \}
+                \end{equation}                        
+            \end{enumerate}
+            \item $product+package+sku$除了把日期从$D_{pricing}$中剥离出来，还将省下的维度拆成$D_{package}$和$D_{sku}$
+            \begin{enumerate}      
+                \item 一共四段：（$D_{product}, D_{package}, D_{sku}, D_{date}$）
+                \item 订单项：$(id_{product}, id_{package}, id_{sku}, param_{date}) \longrightarrow orderline$ 
+                \begin{equation}
+                    \{\underbrace{%
+                        \overbrace{\mathstrut d_0,\ldots,d_k}^{D_{product}},
+                        \overbrace{\mathstrut d_{k+1},\ldots,d_l}^{D_{package}},                        
+                        \overbrace{\mathstrut d_{l+1},\ldots,d_m}^{D_{sku}},
+                        \overbrace{\mathstrut d_{m+1},\ldots,d_n}^{D_{date}}
+                    }
+                    _{D} \}
+                \end{equation}  
+            \end{enumerate}
+        \end{itemize}
+    \item \textbf{酒店OTA}
+        \begin{itemize}
+            \item 国际OTA如Expedia和Booking的直连模型是$product+rateplan$形式，这是标准的$D_{product}$和$D_{pricing}$模式
+            \item $product+rateplan$形式，应该是最通用的上单模型，不仅仅是针对酒店，因为它已经包含了全部定价信息
+        \end{itemize}
+        \begin{equation}
+            \{\underbrace{%
+                \overbrace{\mathstrut d_0,\ldots,d_k}^{D_{product}},
+                \overbrace{\mathstrut d_{k+1},\ldots,d_n}^{D_{rateplan}}
+            }
+            _{D} \}
+        \end{equation}   
+\end{itemize}
+
+\section{展示}
+
+对于同一个业务，供应链与C端通常会以相同维度对产品做聚合，便于进行统一操作，但不绝对。例如酒店供应链操作按逻辑房型和goods操作，C端展示按物理房型聚合。将两端的聚合维度分别记为$D_{caggr}$和$D_{baggr}$，
+\begin{itemize}
+    \item 一般来说：$D_{caggr} \subseteq D_{product}$，并且$D_{baggr} \subseteq D_{product}$
+    \item 某些品类有标品（SPU）的概念，记为$D_{spu} \subseteq D_{product}$，剩余维度记为$D_{select}=D_{product}-D_{spu}$
+\end{itemize}
+\begin{equation}
+    \{\underbrace{%
+        \overbrace{\mathstrut d_0,\ldots,d_k}^{D_{product}},
+        \overbrace{\mathstrut d_{k+1},\ldots,d_n}^{D_{rateplan}}
+    }
+    _{D} \}
+\end{equation}
+\begin{equation}
+    \{\underbrace{%
+        \overbrace{\mathstrut d_0,\ldots,d_s}^{D_{spu}},
+        \overbrace{\mathstrut d_{s+1},\ldots,d_k,\ldots,d_n}^{D_{select}}
+    }
+    _{D} \}
+\end{equation}
+
+\end{document}
