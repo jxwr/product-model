@@ -21,11 +21,11 @@
 \subsection{维度的两部分}
 $D$可以分为两部分，一部分定义了产品，剩余部分定义产品的价格，这里将
 \begin{itemize}
-    \item 定义产品的维度记为$D_{product} \subset D$，其值域为$V_{product}$
+    \item 定义\textbf{产品}的维度记为$D_{product} \subset D$，其值域为$V_{product}$
     \begin{itemize}
-        \item $V_{product} = \{(v_0, v_1, v_2, \ldots, v_n) \mid v_i \in Z_i\}$，这里$Z_i$为$d_i \in D_{product}$的值域
+        \item $V_{product} = \{(v_0, v_1, v_2, \ldots, v_n) \mid v_i \in R_i\}$，这里$R_i$为$d_i \in D_{product}$的值域
     \end{itemize}
-    \item 定义产品价格的维度记为$D_{pricing} = D - D_{product}$，其值域为$V_{pricing}$
+    \item 定义\textbf{产品价格}的维度记为$D_{pricing} = D - D_{product}$，其值域为$V_{pricing}$
 \end{itemize}
 \begin{equation}
     \{\underbrace{%
@@ -41,7 +41,7 @@ $D$可以分为两部分，一部分定义了产品，剩余部分定义产品�
 \subsection{传统零售电商}
 实物零售电商定价比较直接，会为每个$v \in V_{pricing}$创建一个$id_{pricing}$
 \begin{itemize}
-    \item 业界把由$v$确定的实体叫做\textbf{SKU}，此时$id_{pricing}=id_{sku}$
+    \item \textbf{业界把由$v$确定的实体叫做SKU，此时$id_{pricing}=id_{sku}$}
     \item $(id_{product}, id_{sku})$确定一个订单项，记为$(id_{product}, id_{sku}) \longrightarrow orderline$
 \end{itemize}
 \begin{equation}
@@ -74,7 +74,7 @@ $D$可以分为两部分，一部分定义了产品，剩余部分定义产品�
 
 \subsection{到店业务分析}
 \begin{itemize}
-    \item \textbf{美团酒店}
+    \item \textbf{酒店}
         \begin{itemize}
             \item 酒店$goods$没有区分$D_{product}$和$D_{pricing}$
             \item 而是把一部分$D_{pricing}$中的维度放到了$D_{product}$里，其余作为参数（日期，成人儿童数等）
@@ -88,7 +88,7 @@ $D$可以分为两部分，一部分定义了产品，剩余部分定义产品�
             }
             _{D} \}
         \end{equation}
-    \item \textbf{到餐团购}
+    \item \textbf{团购}
         \begin{itemize}
             \item 团购$deal$更简单一些，可认为没有用户参数
             \item 团购没有区分$D_{product}$和$D_{pricing}$，$v \in V$对应一个$id_{deal}$
@@ -130,6 +130,10 @@ $D$可以分为两部分，一部分定义了产品，剩余部分定义产品�
                 \end{equation}  
             \end{enumerate}
         \end{itemize}
+    \item \textbf{到综泛商品}
+        \begin{itemize}
+            \item 与度假类似，也是$product+sku$结构
+        \end{itemize}
     \item \textbf{酒店OTA}
         \begin{itemize}
             \item 国际OTA如Expedia和Booking的直连模型是$product+rateplan$形式，这是标准的$D_{product}$和$D_{pricing}$模式
@@ -141,15 +145,15 @@ $D$可以分为两部分，一部分定义了产品，剩余部分定义产品�
                 \overbrace{\mathstrut d_{k+1},\ldots,d_n}^{D_{rateplan}}
             }
             _{D} \}
-        \end{equation}   
+        \end{equation}
 \end{itemize}
 
 \section{展示}
 
-对于同一个业务，供应链与C端通常会以相同维度对产品做聚合，便于进行统一操作，但不绝对。例如酒店供应链操作按逻辑房型和goods操作，C端展示按物理房型聚合。将两端的聚合维度分别记为$D_{caggr}$和$D_{baggr}$，
+对于同一个业务，供应链与C端通常会以相同维度对产品做聚合，便于进行统一操作，但不绝对。例如酒店供应链操作按逻辑房型和goods操作，C端展示按物理房型聚合。将两端的聚合维度分别记为$D_{caggr}$和$D_{baggr}$
 \begin{itemize}
     \item 一般来说：$D_{caggr} \subseteq D_{product}$，并且$D_{baggr} \subseteq D_{product}$
-    \item 某些品类有标品（SPU）的概念，记为$D_{spu} \subseteq D_{product}$，剩余维度记为$D_{select}=D_{product}-D_{spu}$
+    \item 某些品类有标品（SPU）的概念，记为$D_{spu} \subseteq D_{product}$，剩余维度记为$D_{select}=D_{product}-D_{spu}$，有
 \end{itemize}
 \begin{equation}
     \{\underbrace{%
@@ -160,8 +164,8 @@ $D$可以分为两部分，一部分定义了产品，剩余部分定义产品�
 \end{equation}
 \begin{equation}
     \{\underbrace{%
-        \overbrace{\mathstrut d_0,\ldots,d_s}^{D_{spu}},
-        \overbrace{\mathstrut d_{s+1},\ldots,d_k,\ldots,d_n}^{D_{select}}
+        \overbrace{\mathstrut d_0,\ldots,d_g}^{D_{spu}},
+        \overbrace{\mathstrut d_{g+1},\ldots,d_k,\ldots,d_n}^{D_{select}}
     }
     _{D} \}
 \end{equation}
